@@ -123,7 +123,7 @@ for dir in valid_dirs:
                         cur_ne = None
                         cur_ne_type = None
 
-print(f"#train data: {len(valid_data)}")
+print(f"#valid data: {len(valid_data)}")
 
 
 test_data = []
