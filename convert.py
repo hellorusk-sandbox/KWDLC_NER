@@ -18,6 +18,16 @@ assert len(test_dirs) == 2
 assert len(valid_dirs) == 2
 
 ner_pat = re.compile(r'<NE:(.+):(.+)(:.+)*>')
+ner_dic = {
+    "ORGANIZATION": "ORG",
+    "PERSON": "PSN",
+    "LOCATION": "LOC",
+    "ARTIFACT": "ART",
+    "DATE": "DAT",
+    "TIME": "TIM",
+    "MONEY": "MNY",
+    "PERCENT": "PNT"
+}
 
 
 train_data = []
@@ -27,6 +37,7 @@ for dir in train_dirs:
 
     for file in files:
         with open(f"./KWDLC/knp/{dir}/{file}", "r") as f:
+            print(f"processing {file}...")
             cur_sent = ""
             cur_dict = []
             cur_ne = None
@@ -49,8 +60,11 @@ for dir in train_dirs:
                     # print(line)
                     res = ner_pat.search(line)
                     if res is not None:
-                        cur_ne = res[2]
-                        cur_ne_type = res[1][:3]
+                        try:
+                            cur_ne = res[2]
+                            cur_ne_type = ner_dic[res[1]]
+                        except KeyError:
+                            print(f"{res[1]} is unexpected")
 
                 else:
                     cur_sent += split_line[0]
@@ -80,6 +94,7 @@ for dir in valid_dirs:
 
     for file in files:
         with open(f"./KWDLC/knp/{dir}/{file}", "r") as f:
+            print(f"processing {file}...")
             cur_sent = ""
             cur_dict = []
             cur_ne = None
@@ -102,8 +117,11 @@ for dir in valid_dirs:
                     # print(line)
                     res = ner_pat.search(line)
                     if res is not None:
-                        cur_ne = res[2]
-                        cur_ne_type = res[1][:3]
+                        try:
+                            cur_ne = res[2]
+                            cur_ne_type = ner_dic[res[1]]
+                        except KeyError:
+                            print(f"{res[1]} is unexpected")
 
                 else:
                     cur_sent += split_line[0]
@@ -133,6 +151,7 @@ for dir in test_dirs:
 
     for file in files:
         with open(f"./KWDLC/knp/{dir}/{file}", "r") as f:
+            print(f"processing {file}...")
             cur_sent = ""
             cur_dict = []
             cur_ne = None
@@ -155,8 +174,11 @@ for dir in test_dirs:
                     # print(line)
                     res = ner_pat.search(line)
                     if res is not None:
-                        cur_ne = res[2]
-                        cur_ne_type = res[1][:3]
+                        try:
+                            cur_ne = res[2]
+                            cur_ne_type = ner_dic[res[1]]
+                        except KeyError:
+                            print(f"{res[1]} is unexpected")
 
                 else:
                     cur_sent += split_line[0]
@@ -192,7 +214,8 @@ def convert_to_dataset(data):
                 labels.append({
                     'label': state['last_label'],
                     'start': state['offset'],
-                    'end': state['offset'] + len_surface
+                    'end': state['offset'] + len_surface,
+                    'surface': state['text_buffer']
                 })
                 all_labels.append(state['last_label'])
             text.append(state['text_buffer'])
@@ -209,8 +232,7 @@ def convert_to_dataset(data):
     # レベルリストの重複を除く
     all_labels = sorted(set(all_labels))
     d = OrderedDict()
-    d['text'] = [_[0] for _ in entries]
-    d['tag_names'] = [all_labels] * len(entries)
+    d['surface'] = [_[0] for _ in entries]
     d['annotations'] = [_[1] for _ in entries]
     return datasets.Dataset.from_dict(d)
 
